@@ -61,7 +61,7 @@ function checkRegisterPassword(password, confirm_password) {
 
 function createToken({ _id, isAdmin }) {
     const token = jwt.sign({ id: _id, isAdmin }, process.env.JWT_SEC_KEY, { expiresIn: MAX_AGE });
-    const options = { httpOnly: true, secure: true, sameSite: 'lax', maxAge: MAX_AGE * 1000};
+    const options = { httpOnly: true, secure: true, sameSite: 'none', maxAge: MAX_AGE * 1000};
     return { token, options };
 }
 
