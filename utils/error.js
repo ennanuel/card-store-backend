@@ -2,13 +2,12 @@ function errorHandler(err) {
     const { code, message } = err;
     const error = { message: '' };
     if (code === 11000) {
-        error.username = error.email = 'Already exists'
+        error.message = 'Email or Username Already exists';
     }
     else if (message.includes('user validation error')) {
         const errors = Object.values(err.errors);
-        for (let { properties } of errors) {
-            error[properties.path] = properties.message;
-        }
+        error.field = errors[0];
+        error.message = errors[0].message;
     } else {
         error.message = err.message;
     }

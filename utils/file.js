@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const { checkValues } = require('./player');
-const { checkRegisterValues } = require('./auth');
+const { checkEditValues } = require('./auth');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -43,9 +43,13 @@ async function uploadCardMiddleWare(req, res, next) {
             next();
         } catch (error) {
             console.error(error);
-            const filepath = `card/${req.body.image}`
-            await deleteImage(filepath);
-            return res.status(500).json({ message: error.message });
+            const filepath = `card/${req.body.image}`;
+            deleteImage(filepath)
+                .then(() => res.status(500).json({ message: error.message }))
+                .catch((err) => {
+                    console.error(err);
+                    return res.status(500).json({ message: error.messaage })
+                });
         }
     })
 }
@@ -54,15 +58,19 @@ async function uploadProfileMiddleware(req, res, next) {
     uploadProfile(req, res, async (err) => {
         try {
             if (err) throw handleMulterError(err);
-            const { failed, message } = checkRegisterValues(req.body);
+            const { failed, message } = checkEditValues(req.body);
             if (failed) throw new Error(message);
             req.body.owner = req.user.id;
             next();
         } catch (error) {
             console.error(error);
-            const filepath = `card/${req.body.image}`
-            await deleteImage(filepath);
-            return res.status(500).json({ message: error.message });
+            const filepath = `card/${req.body.image}`;
+            deleteImage(filepath)
+                .then(() => res.status(500).json({ message: error.message }))
+                .catch((err) => {
+                    console.error(err);
+                    return res.status(500).json({ message: error.messaage })
+                })
         }
     })
 }

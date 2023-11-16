@@ -5,7 +5,7 @@ const { deleteImage, prepareDeleteImages } = require("../utils/file");
 async function updateUserInfo(req, res) {
     try {
         const { user_id } = req.params;
-        const { profilePic, prevProfilePic, ...user } = req.body;
+        const { profilePic, prevProfilePic, isDemo, isAdmin, notification, password, ...user } = req.body;
         if (!profilePic) user.profilePic = prevProfilePic;
         else await deleteImage(`profile/${prevProfilePic}`);
         const updatedUser = await User.findByIdAndUpdate(user_id, { $set: user });
@@ -20,7 +20,7 @@ async function updateUserInfo(req, res) {
 async function getUserInfo(req, res) {
     try {
         const { user_id } = req.params;
-        const user = await User.findById(user_id, { password: -1 });
+        const user = await User.findById(user_id, 'names username dob bank account_number phone email');
         if (!user) throw new Error('No user found');
         return res.status(200).json(user);
     } catch (err) {
@@ -33,7 +33,7 @@ async function getAllUsers(req, res) {
     const { page = 0, limit = 5 } = req.query;
     const skip = page * limit;
     try {
-        const users = await User.find({}, { password: -1 })
+        const users = await User.find({}, { password: 0 })
             .sort({ 'names.first': -1 })
             .skip(skip)
             .limit(limit);

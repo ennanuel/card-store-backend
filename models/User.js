@@ -39,6 +39,11 @@ const UserSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
+        isDemo: {
+            type: Boolean,
+            default: true
+        },
+        notification: String,
         profilePic: String,
         phone: Number,
         address: String,
@@ -52,17 +57,16 @@ const UserSchema = new mongoose.Schema(
 UserSchema.pre('save', function (next) { 
     const password = this.password;
     this.password = hashPassword(password);
+    this.notification = 'The #1 Card Store in the world!';
     next();
 });
 
 UserSchema.post('save', function (doc, next) { 
     const cart = new Cart({ user_id: doc._id, items: [] });
     cart.save()
-        .then(() => next())
-        .catch((error) => {
-            console.error(error);
-            next()
-        });
+        .then(() => console.log('user cart created'))
+        .catch((error) => console.error(error))
+        .finally(() => next());
 });
 
 module.exports = mongoose.model('User', UserSchema);

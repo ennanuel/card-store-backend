@@ -1,5 +1,6 @@
+const InvalidTokens = require('../models/InvalidTokens');
 const User = require('../models/User');
-const { checkRegisterValues, checkLoginPassword, createToken } = require('../utils/auth');
+const { checkRegisterValues, checkLoginPassword, createToken, unhashPassword } = require('../utils/auth');
 const errorHandler = require('../utils/error');
 
 async function register(req, res) { 
@@ -35,12 +36,22 @@ async function login(req, res) {
     }
 };
 
-async function logout(req, res) { };
+async function logout(req, res) { 
+    try {
+        const userToken = req.cookies.userToken;
+        res.cookie('userToken', '', { httpOnly: true, secure: false, maxAge: 3600 * 1000 });
+        await InvalidTokens.create({ token: userToken });
+        return res.status(200).json({ message: 'Logged user out' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: error.message });
+    }
+};
 
 async function authenticate(req, res) { 
     try {
         const { id } = req.user;
-        const user = await User.findById(id, { _id: 1, names: 2, profilePic: 3, isAdmin: 4 });
+        const user = await User.findById(id, { _id: 1, names: 2, profilePic: 3, isAdmin: 4, username: 5, notification: 6 });
         if (!user?._id) throw new Error('No user found'); 
         return res.status(200).json(user);
     } catch (error) {
@@ -49,9 +60,21 @@ async function authenticate(req, res) {
     }
 };
 
+async function getDemoUsers(req, res) {
+    try {
+        const users = await User.find({ isDemo: true }, { username: 1, password: 2, names: 3, profilePic: 4, isAdmin: 5 });
+        const demoUsers = users.map(user =>({ ...user._doc, password: unhashPassword(user._doc.password) }));
+        return res.status(200).json(demoUsers);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     register,
     login,
     logout,
-    authenticate
+    authenticate,
+    getDemoUsers
 }

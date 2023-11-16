@@ -1,11 +1,11 @@
 const router = require('express').Router();
 const { updateUserInfo, getUserInfo, getAllUsers, deleteUser } = require('../controllers/user');
 const { verifyTokenAndAuthorization, verifyTokenAndAdmin } = require('../utils/verifyToken');
-const User = require('../models/User');
+const { uploadProfileMiddleware } = require('../utils/file');
 
 router.get('/all', verifyTokenAndAdmin, getAllUsers);
-router.put('/:user_id', verifyTokenAndAuthorization, updateUserInfo);
-router.get('/find/:user_id', verifyTokenAndAuthorization, getUserInfo);
+router.get('/single/:user_id', verifyTokenAndAuthorization, getUserInfo);
+router.put('/:user_id', verifyTokenAndAuthorization, uploadProfileMiddleware, updateUserInfo);
 router.delete('/:user_id', verifyTokenAndAuthorization, deleteUser)
 
 module.exports = router;

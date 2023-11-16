@@ -1,13 +1,23 @@
 const jwt = require('jsonwebtoken');
+const InvalidTokens = require('../models/InvalidTokens');
 
 function verifyToken (req, res, next) {
-    const userToken = req.cookies.userToken
+    const userToken = req.cookies.userToken;
     if (!userToken) return res.status(401).json({ message: 'You are not authenticated.' });
-    jwt.verify(userToken, process.env.JWT_SEC_KEY, (err, user) => {
-        if(err) return res.status(401).json({ message: 'Token is not valid.' });
-        req.user = user;
-        next();
-    })
+    InvalidTokens
+        .findOne({ token: userToken })
+        .then(invalidToken => {
+            if (invalidToken) return res.status(401).json({ message: 'Invalid token' });
+            jwt.verify(userToken, process.env.JWT_SEC_KEY, (err, user) => {
+                if(err) return res.status(401).json({ message: 'Token is not valid.' });
+                req.user = user;
+                next();
+            })
+        })
+        .catch(() => {
+            console.error(error);
+            return res.status(401).json({ message: error.messge });
+        });
 }
 
 function verifyTokenAndAuthorization (req, res, next) {

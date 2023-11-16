@@ -14,8 +14,7 @@ const CartSchema = Schema({
             card_id: {
                 type: Schema.Types.ObjectId,
                 ref: 'Player',
-                required: [true, 'Card missing id'],
-                unique: true
+                required: [true, 'Card missing id']
             },
             quantity: {
                 type: Number,
