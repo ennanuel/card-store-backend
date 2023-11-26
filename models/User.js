@@ -43,8 +43,8 @@ const UserSchema = new mongoose.Schema(
             type: Boolean,
             default: true
         },
-        notification: String,
         profilePic: String,
+        notification: String,
         phone: Number,
         address: String,
         dob: Date,
@@ -58,6 +58,7 @@ UserSchema.pre('save', function (next) {
     const password = this.password;
     this.password = hashPassword(password);
     this.notification = 'The #1 Card Store in the world!';
+    this.profilePic = null;
     next();
 });
 
