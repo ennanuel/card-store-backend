@@ -13,14 +13,14 @@ const FETCH_CARDS_TYPES = {
 
 function addPremiumValue(card) {
     const modifiedCard = { ...card._doc };
-    modifiedCard.premium = modifiedCard.price > 50000;
+    modifiedCard.premium = modifiedCard.price > 10000 || modifiedCard.rating > 96;
     return modifiedCard;
 }
 
 async function additionalCardValues(card, user_id) {
     const modifiedCard = { ...card._doc };
     const ownerId = modifiedCard.owner.toString()
-    modifiedCard.premium = modifiedCard.price > 50000;
+    modifiedCard.premium = modifiedCard.price > 10000 || modifiedCard.rating > 96;
     modifiedCard.isYours = ownerId === user_id;
     modifiedCard.isOutOfStock = modifiedCard.quantity <= 0;
     modifiedCard.isInCart = await checkIfCardIsInCart(modifiedCard, user_id);
@@ -56,32 +56,52 @@ async function getCardsByType({type, search, limit, page}) {
 async function getCardsByName({ entry, search, limit, skip }) { 
     const firstAlphabetRegexp = new RegExp(`^${search.substring(0, 1)}`, 'i');
     const nameEntry = `names.${entry}`;
-    const result = await Player.find({ [nameEntry]: { $regex: firstAlphabetRegexp } }).sort({ [nameEntry]: -1 }).limit(limit).skip(skip);
-    const totalCards = await Player.countDocument({ [nameEntry]: { $regex: firstAlphabetRegexp } });
+    const result = await Player
+        .find({ [nameEntry]: { $regex: firstAlphabetRegexp } })
+        .sort({ [nameEntry]: -1, createdAt: -1 })
+        .limit(limit)
+        .skip(skip);
+    const totalCards = await Player.countDocuments({ [nameEntry]: { $regex: firstAlphabetRegexp } });
     return { totalCards, result };
 };
 async function getCardsByTeam({ search, limit, skip }) { 
     const searchParam = getSearchParam(search, 'team');
-    const result = await Player.find(searchParam).sort({ 'names.first': -1 }).limit(limit).skip(skip);
-    const totalCards = await Player.countDocument(searchParam);
+    const result = await Player
+        .find(searchParam)
+        .sort({ 'names.first': -1, createdAt: -1 })
+        .limit(limit)
+        .skip(skip);
+    const totalCards = await Player.countDocuments(searchParam);
     return { totalCards, result };
 };
 async function getCardsBySport({ search, limit, skip }) {
     const searchParam = getSearchParam(search, 'sport');
-    const result = await Player.find(searchParam).sort({ 'names.first': -1 }).limit(limit).skip(skip);
-    const totalCards = await Player.countDocument(searchParam);
+    const result = await Player
+        .find(searchParam)
+        .sort({ 'names.first': -1, createdAt: -1 })
+        .limit(limit)
+        .skip(skip);
+    const totalCards = await Player.countDocuments(searchParam);
     return { totalCards, result };
 };
 async function getCardsByRating({ search, limit, skip }) { 
     const [greaterThan, lessThan] = getRatingNumbers(search);
-    const result = await Player.find({ rating: { $gte: greaterThan, $lte: lessThan } }).sort({ rating: -1 }).limit(limit).skip(skip);
-    const totalCards = await Player.countDocument({ rating: { $gte: greaterThan, $lte: lessThan } })
+    const result = await Player
+        .find({ rating: { $gte: greaterThan, $lte: lessThan } })
+        .sort({ rating: -1, createdAt: -1 })
+        .limit(limit)
+        .skip(skip);
+    const totalCards = await Player.countDocuments({ rating: { $gte: greaterThan, $lte: lessThan } })
     return { totalCards, result };
 };
 async function getCardsByPrice({ search, limit, skip }) {  
     const [greaterThan, lessThan] = convertStringToNumbers(search);
-    const result = await Player.find({ price: { $gte: greaterThan, $lte: lessThan } }).sort({ price: -1 }).limit(limit).skip(skip);
-    const totalCards = await Player.countDocument({ price: { $gte: greaterThan, $lte: lessThan } });
+    const result = await Player
+        .find({ price: { $gte: greaterThan, $lte: lessThan } })
+        .sort({ price: -1, createdAt: -1 })
+        .limit(limit)
+        .skip(skip);
+    const totalCards = await Player.countDocuments({ price: { $gte: greaterThan, $lte: lessThan } });
     return { totalCards, result };
 };
 
