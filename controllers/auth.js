@@ -39,7 +39,7 @@ async function login(req, res) {
 async function logout(req, res) { 
     try {
         const userToken = req.cookies.userToken;
-        res.cookie('userToken', '', { httpOnly: true, secure: false, maxAge: 3600 * 1000 });
+        res.cookie('userToken', '', /*{ httpOnly: true, secure: true, sameSite: 'none', maxAge: MAX_AGE * 1000},*/ { httpOnly: false, secure: false });
         await InvalidTokens.create({ token: userToken });
         return res.status(200).json({ message: 'Logged user out' });
     } catch (error) {
@@ -51,7 +51,7 @@ async function logout(req, res) {
 async function authenticate(req, res) { 
     try {
         const { id } = req.user;
-        const user = await User.findById(id, { _id: 1, names: 2, profilePic: 3, isAdmin: 4, username: 5, notification: 6 });
+        const user = await User.findById(id, 'names names profilePic isAdmin username notification');
         if (!user?._id) throw new Error('No user found'); 
         return res.status(200).json(user);
     } catch (error) {
@@ -62,7 +62,7 @@ async function authenticate(req, res) {
 
 async function getDemoUsers(req, res) {
     try {
-        const users = await User.find({ isDemo: true }, { username: 1, password: 2, names: 3, profilePic: 4, isAdmin: 5 });
+        const users = await User.find({ isDemo: true }, 'username password names profilePic isAdmin');
         const demoUsers = users.map(user =>({ ...user._doc, password: unhashPassword(user._doc.password) }));
         return res.status(200).json(demoUsers);
     } catch (error) {
