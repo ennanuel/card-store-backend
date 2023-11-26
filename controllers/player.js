@@ -17,9 +17,13 @@ async function fetchSinglePlayer(req, res) {
 
 async function fetchAllPlayers(req, res) {
     try {
-        const foundCards = await Player.find();
+        const { page = 0, limit = 10 } = req.query;
+        const skip = page * limit == 'NaN' ? 0 : currentPage * limit;
+        const foundCards = await Player.find().limit(limit).skip(skip);
+        const totalCards = await Player.countDocuments();
         const cards = foundCards.map(addPremiumValue);
-        return res.status(200).json(cards);
+        const pages = Math.ceil(totalCards / limit);
+        return res.status(200).json({ cards, page, pages });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: error.message });
@@ -33,7 +37,9 @@ async function fetchRelatedPlayers(req, res) {
         const cards = await Player.find({
             _id: { $ne: card._doc._id },
             sport: card._doc._sport
-        }).sort({ rating: -1 });
+        })
+            .sort({ rating: -1 })
+            .limit(6);
         const relatedCards = cards.map(addPremiumValue);
         return res.status(200).json(relatedCards);
     } catch (error) {
@@ -45,12 +51,13 @@ async function fetchRelatedPlayers(req, res) {
 async function fetchPlayersBasedOnType(req, res) {
     try {
         const { fetchType, searchValue } = req.params;
+        const { limit = 16, page = 0 } = req.query;
         const fetchAll = !searchValue || searchValue.toLowerCase() === 'all';
         if (fetchAll) return fetchAllPlayers(req, res);
         const typeToLowerCase = fetchType.toLowerCase();
-        const result = await getCardsByType(typeToLowerCase, searchValue);
+        const { totalPages, result } = await getCardsByType({ type: typeToLowerCase, search: searchValue, limit, page });
         const cards = result.map(addPremiumValue);
-        return res.status(200).json(cards);
+        return res.status(200).json({ totalPages, page, cards });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: error.message });
