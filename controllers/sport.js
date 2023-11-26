@@ -15,7 +15,8 @@ const aggregateFormat = {
     $project: { "name": "$_id.sport" }
 };
 
-async function fetchSports (req, res) {
+async function fetchSports(req, res) {
+    const { limit = 9999999 } = req.query;
     try {
         const sports = await Player
             .aggregate([
@@ -24,7 +25,7 @@ async function fetchSports (req, res) {
                 aggregateFormat
             ])
             .sort({ name: -1 })
-            .limit(10);
+            .limit(limit);
         return res.status(200).json(sports)
     } catch (err) {
         console.error(err);
