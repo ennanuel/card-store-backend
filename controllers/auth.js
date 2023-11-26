@@ -39,7 +39,7 @@ async function login(req, res) {
 async function logout(req, res) { 
     try {
         const userToken = req.cookies.userToken;
-        res.cookie('userToken', '', /*{ httpOnly: true, secure: true, sameSite: 'none', maxAge: MAX_AGE * 1000},*/ { httpOnly: false, secure: false });
+        res.cookie('userToken', '', { httpOnly: true, secure: true, sameSite: 'none', maxAge: MAX_AGE * 1000});
         await InvalidTokens.create({ token: userToken });
         return res.status(200).json({ message: 'Logged user out' });
     } catch (error) {
