@@ -52,7 +52,7 @@ async function getOrdersBasedOnStatus(req, res) {
         const skip = currentPage * limit;
         const foundOrders = await Order.find({ user_id, status }).limit(limit).skip(skip).sort({ createdAt: -1 });
         const orders = foundOrders.map(getCardNamesString);
-        const count = await Order.countDocuments();
+        const count = await Order.countDocuments({ user_id, status });
         const totalPages = Math.ceil(count / limit);
         return res.status(200).json({ orders, totalPages, currentPage });
     } catch (error) {
@@ -77,15 +77,19 @@ async function createOrder (req, res) {
     try {
         const { user_id } = req.params;
         const { destination = 'Lagos, Nigeria' } = req.body;
-        const userCart = await Cart.findOne({ user_id }, { items: 1, total: 2 });
+        const userCart = await Cart.findOne({ user_id }, 'items total');
         const itemIds = userCart._doc.items.map(item => item.card_id);
-        const foundItems = await Player.find({ _id: { $in: itemIds } }, { names: 1 });
+        const foundItems = await Player.find({ _id: { $in: itemIds } }, 'names quantity');
         if (foundItems.length < 1) throw new Error('Cart is empty');
         const itemsQuantity = userCart.items.reduce((a, b) => ({ ...a, [b.card_id.toString()]: b.quantity }), {});
         const itemsWithNames = foundItems.map(item => ({ ...item, quantity: itemsQuantity[item._doc._id.toString()] }));
         const order = { user_id, cards: itemsWithNames, amount: userCart.total, destination };
         const newOrder = new Order(order);
         await newOrder.save();
+        foundItems.forEach(async (player) => {
+            player.quantity = player._doc.quantity - itemsQuantity[player._id.toString()];
+            await player.save();
+        });
         const { failed, message } = await resetCart(userCart);
         if (failed) throw new Error(message);
         const order_id = newOrder._doc._id.toString();
