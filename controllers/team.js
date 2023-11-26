@@ -21,11 +21,15 @@ const aggregateFormat = {
 
 async function fetchTeams(req, res) {
     try {
-        const teams = await Player.aggregate([
-            groupSimilarValues,
-            matchValues,
-            aggregateFormat
-        ]).sort({ name: -1 })
+        const { limit = 999 } = req.query;
+        const teams = await Player
+            .aggregate([
+                groupSimilarValues,
+                matchValues,
+                aggregateFormat
+            ])
+            .sort({ name: -1 })
+            .limit(limit)
 
         res.status(200).json(teams)
     } catch (err) {
