@@ -44,39 +44,45 @@ function checkValues(values) {
     return { failed: false, message: '' };
 }
 
-async function getCardsByType(type, search) {
+async function getCardsByType({type, search, limit, page}) {
     const fetchType = NAME_ENTRIES.includes(type) ? 'name' : type;
     const fetchCards = FETCH_CARDS_TYPES[fetchType];
     if (!fetchCards) return [];
-    const cards = await fetchCards({ search, entry: type });
-    return cards;
+    const skip = limit * page == 'NaN' ? 0 : limit * page;
+    const result = await fetchCards({ search, entry: type, limit, skip });
+    return result;
 }
 
-async function getCardsByName({ entry, search }) { 
+async function getCardsByName({ entry, search, limit, skip }) { 
     const firstAlphabetRegexp = new RegExp(`^${search.substring(0, 1)}`, 'i');
     const nameEntry = `names.${entry}`;
-    const cards = await Player.find({ [nameEntry]: { $regex: firstAlphabetRegexp } }).sort({ [nameEntry]: -1 });
-    return cards;
+    const result = await Player.find({ [nameEntry]: { $regex: firstAlphabetRegexp } }).sort({ [nameEntry]: -1 }).limit(limit).skip(skip);
+    const totalCards = await Player.countDocument({ [nameEntry]: { $regex: firstAlphabetRegexp } });
+    return { totalCards, result };
 };
-async function getCardsByTeam({ search }) { 
+async function getCardsByTeam({ search, limit, skip }) { 
     const searchParam = getSearchParam(search, 'team');
-    const cards = await Player.find(searchParam).sort({ 'names.first': -1 });
-    return cards;
+    const result = await Player.find(searchParam).sort({ 'names.first': -1 }).limit(limit).skip(skip);
+    const totalCards = await Player.countDocument(searchParam);
+    return { totalCards, result };
 };
-async function getCardsBySport({ search }) {
+async function getCardsBySport({ search, limit, skip }) {
     const searchParam = getSearchParam(search, 'sport');
-    const cards = await Player.find(searchParam).sort({ 'names.first': -1 });
-    return cards;
+    const result = await Player.find(searchParam).sort({ 'names.first': -1 }).limit(limit).skip(skip);
+    const totalCards = await Player.countDocument(searchParam);
+    return { totalCards, result };
 };
-async function getCardsByRating({ search }) { 
+async function getCardsByRating({ search, limit, skip }) { 
     const [greaterThan, lessThan] = getRatingNumbers(search);
-    const cards = await Player.find({ rating: { $gte: greaterThan, $lte: lessThan } }).sort({ rating: -1 });
-    return cards;
+    const result = await Player.find({ rating: { $gte: greaterThan, $lte: lessThan } }).sort({ rating: -1 }).limit(limit).skip(skip);
+    const totalCards = await Player.countDocument({ rating: { $gte: greaterThan, $lte: lessThan } })
+    return { totalCards, result };
 };
-async function getCardsByPrice({ search }) {  
+async function getCardsByPrice({ search, limit, skip }) {  
     const [greaterThan, lessThan] = convertStringToNumbers(search);
-    const cards = await Player.find({ price: { $gte: greaterThan, $lte: lessThan } }).sort({ price: -1 });
-    return cards;
+    const result = await Player.find({ price: { $gte: greaterThan, $lte: lessThan } }).sort({ price: -1 }).limit(limit).skip(skip);
+    const totalCards = await Player.countDocument({ price: { $gte: greaterThan, $lte: lessThan } });
+    return { totalCards, result };
 };
 
 function convertToNumber(val) { return /nan/i.test(Number(val)) ? 0 : Number(val) };
