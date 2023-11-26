@@ -28,7 +28,7 @@ async function addItemToCart(req, res) {
         const notEnoughQuantity = itemQuantity > card._doc.quantity;
         if (notEnoughQuantity) throw new Error('Card quantity is not enough');
         const itemsIds = cart._doc.items.map(item => item.card_id);
-        const cartItems = await Cart.find({ _id: { $in: itemsIds } });
+        const cartItems = await Player.find({ _id: { $in: itemsIds } });
         card._doc.card_id = card_id;
         card._doc.quantity = itemQuantity;
         cartItems.push(card);
@@ -44,7 +44,7 @@ async function addItemToCart(req, res) {
         cart.total = total + shippingCost;
         cart.quantity = quantity;
         await cart.save();
-        return res.status(200).json({ item: card, quantity, total, shippingCost });
+        return res.status(200).json({ item: card, quantity, total: total + shippingCost, shippingCost });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: error.message });
@@ -71,7 +71,7 @@ async function removeItemFromCart(req, res) {
         cart.total = total + shippingCost;
         cart.quantity = quantity;
         await cart.save();
-        return res.status(200).json({ card_id, quantity, shippingCost, quantity });
+        return res.status(200).json({ card_id, quantity, total: total + shippingCost, shippingCost, quantity });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: error.message });
