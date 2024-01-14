@@ -107,8 +107,8 @@ async function getCardsByPrice({ search, limit, skip }) {
         .sort({ price: -1, createdAt: -1 })
         .limit(limit)
         .skip(skip);
-    const totalCards = await Player.countDocuments({ price: { $gte: greaterThan, $lte: lessThan } });
-    const cards = Math.ceil(cards / limit);
+    const cards = await Player.countDocuments({ price: { $gte: greaterThan, $lte: lessThan } });
+    const totalCards = Math.ceil(cards / limit);
     return { totalCards, result };
 };
 
