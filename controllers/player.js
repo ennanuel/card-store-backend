@@ -39,7 +39,7 @@ async function fetchRelatedPlayers(req, res) {
         const limit = 6;
         const card = await Player.findById(card_id, { _id: 1, sport: 2 }).lean();
         const sportRegExp = new RegExp(card.sport, 'i');
-        const cards = await getRelatedCardsQuery({ cardId: card._id, sport: sportRegExp });
+        const cards = await getRelatedCardsQuery({ cardId: card._id, sport: sportRegExp, limit });
         const relatedCards = cards.map(addPremiumValue);
         return res.status(200).json(relatedCards);
     } catch (error) {
