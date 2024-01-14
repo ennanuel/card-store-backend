@@ -1,6 +1,6 @@
 const Player = require('../models/Player');
 const { deleteImage } = require('../utils/file');
-const { getCardsByType, additionalCardValues, addPremiumValue } = require('../utils/player');
+const { getCardsByType, additionalCardValues, addPremiumValue, getRelatedCardsQuery } = require('../utils/player');
 
 async function fetchSinglePlayer(req, res) {
     try {            
@@ -36,15 +36,10 @@ async function fetchAllPlayers(req, res) {
 async function fetchRelatedPlayers(req, res) {
     try {
         const { card_id } = req.params;
-        const card = await Player.findById(card_id, { _id: 1, sport: 2 });
-        const sportRegExp = new RegExp(card._doc.sport, 'i');
-        const cards = await Player
-            .find({
-                _id: { $ne: card._doc._id },
-                sport: { $regex: sportRegExp }
-            })
-            .sort({ rating: -1, createdAt: -1 })
-            .limit(6);
+        const limit = 6;
+        const card = await Player.findById(card_id, { _id: 1, sport: 2 }).lean();
+        const sportRegExp = new RegExp(card.sport, 'i');
+        const cards = await getRelatedCardsQuery({ cardId: card._id, sport: sportRegExp });
         const relatedCards = cards.map(addPremiumValue);
         return res.status(200).json(relatedCards);
     } catch (error) {
