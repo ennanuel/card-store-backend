@@ -9,30 +9,41 @@ const groupSimilarSports = {
         count: { $sum: 1 }
     }
 };
-const matchValues = {
-    $match: { count: { $gte: 1 } },
-};
+const matchValues = (regexp) => ({
+    $match: {
+        count: { $gte: 1 },
+        "_id.sport": { $regex: regexp }
+    },
+});
 const aggregateFormat = {
-    $project: { "name": "$_id.sport" }
+    $project: {
+        "name": "$_id.sport",
+    }
 };
 
+const getSports = (sportRegExp) => Player
+    .aggregate([
+        groupSimilarSports,
+        matchValues(sportRegExp),
+        aggregateFormat
+    ])
+    .sort({ name: -1 });
+
 async function fetchSports(req, res) {
-    const { limit = 9999999 } = req.query;
-    const limitNum = convertToNumber(limit)
     try {
-        const sports = await Player
-            .aggregate([
-                groupSimilarSports,
-                matchValues,
-                aggregateFormat
-            ])
-            .sort({ name: -1 })
-            .limit(limitNum);
-        return res.status(200).json(sports)
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: err.message })
+        const { limit = 999999, page = 0, search = "" } = req.query;
+        const sportRegExp = new RegExp(search, 'i');
+        const limitNum = convertToNumber(limit);
+        const pageNum = convertToNumber(page);
+        const skip = pageNum * limitNum;
+        const sports = await getSports(sportRegExp).skip(skip).limit(limitNum);
+        const totalSports = (await getSports(sportRegExp)).length;
+        const totalPages = Math.ceil(totalSports / limitNum);
+        return res.status(200).json({ sports, totalPages, page: pageNum });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: error.message})
     }
-}
+};
 
 module.exports = { fetchSports };
