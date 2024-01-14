@@ -1,4 +1,5 @@
 const Player = require('../models/Player');
+const { convertToNumber } = require('../utils/player');
 
 const groupSimilarValues = {
     $group: {
@@ -21,7 +22,8 @@ const aggregateFormat = {
 
 async function fetchTeams(req, res) {
     try {
-        const { limit = 999 } = req.query;
+        const { limit = 999999 } = req.query;
+        const limitNum = convertToNumber(limit)
         const teams = await Player
             .aggregate([
                 groupSimilarValues,
@@ -29,11 +31,11 @@ async function fetchTeams(req, res) {
                 aggregateFormat
             ])
             .sort({ name: -1 })
-            .limit(limit)
-
-        res.status(200).json(teams)
-    } catch (err) {
-        res.status(500).json(err)
+            .limit(limitNum);
+        return res.status(200).json(teams)
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: error.message})
     }
 };
 
