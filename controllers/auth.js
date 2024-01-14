@@ -1,6 +1,6 @@
 const InvalidTokens = require('../models/InvalidTokens');
 const User = require('../models/User');
-const { checkRegisterValues, checkLoginPassword, createToken, unhashPassword } = require('../utils/auth');
+const { checkRegisterValues, checkLoginPassword, createToken, unhashPassword, MAX_AGE } = require('../utils/auth');
 const errorHandler = require('../utils/error');
 
 async function register(req, res) { 
