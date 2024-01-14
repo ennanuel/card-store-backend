@@ -86,5 +86,6 @@ module.exports = {
     checkRegisterValues,
     checkEditValues,
     checkLoginPassword,
-    createToken
+    createToken,
+    MAX_AGE
 }
