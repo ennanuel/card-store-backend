@@ -48,8 +48,10 @@ async function getCardsByType({type, search, limit, page}) {
     const fetchType = NAME_ENTRIES.includes(type) ? 'name' : type;
     const fetchCards = FETCH_CARDS_TYPES[fetchType];
     if (!fetchCards) return [];
-    const skip = limit * page == 'NaN' ? 0 : limit * page;
-    const result = await fetchCards({ search, entry: type, limit, skip });
+    const limitNum = convertToNumber(limit);
+    const pageNum = convertToNumber(page);
+    const skip = limitNum * pageNum == 'NaN' ? 0 : limitNum * pageNum;
+    const result = await fetchCards({ search, entry: type, limit: limitNum, skip });
     return result;
 }
 
@@ -61,7 +63,8 @@ async function getCardsByName({ entry, search, limit, skip }) {
         .sort({ [nameEntry]: -1, createdAt: -1 })
         .limit(limit)
         .skip(skip);
-    const totalCards = await Player.countDocuments({ [nameEntry]: { $regex: firstAlphabetRegexp } });
+    const cards = await Player.countDocuments({ [nameEntry]: { $regex: firstAlphabetRegexp } });
+    const totalCards = Math.ceil(cards / limit);
     return { totalCards, result };
 };
 async function getCardsByTeam({ search, limit, skip }) { 
@@ -71,7 +74,8 @@ async function getCardsByTeam({ search, limit, skip }) {
         .sort({ 'names.first': -1, createdAt: -1 })
         .limit(limit)
         .skip(skip);
-    const totalCards = await Player.countDocuments(searchParam);
+    const cards = await Player.countDocuments(searchParam);
+    const totalCards = Math.ceil(cards / limit);
     return { totalCards, result };
 };
 async function getCardsBySport({ search, limit, skip }) {
@@ -81,7 +85,8 @@ async function getCardsBySport({ search, limit, skip }) {
         .sort({ 'names.first': -1, createdAt: -1 })
         .limit(limit)
         .skip(skip);
-    const totalCards = await Player.countDocuments(searchParam);
+    const cards = await Player.countDocuments(searchParam);
+    const totalCards = Math.ceil(cards / limit);
     return { totalCards, result };
 };
 async function getCardsByRating({ search, limit, skip }) { 
@@ -91,7 +96,8 @@ async function getCardsByRating({ search, limit, skip }) {
         .sort({ rating: -1, createdAt: -1 })
         .limit(limit)
         .skip(skip);
-    const totalCards = await Player.countDocuments({ rating: { $gte: greaterThan, $lte: lessThan } })
+    const cards = await Player.countDocuments({ rating: { $gte: greaterThan, $lte: lessThan } });
+    const totalCards = Math.ceil(cards / limit);
     return { totalCards, result };
 };
 async function getCardsByPrice({ search, limit, skip }) {  
@@ -102,6 +108,7 @@ async function getCardsByPrice({ search, limit, skip }) {
         .limit(limit)
         .skip(skip);
     const totalCards = await Player.countDocuments({ price: { $gte: greaterThan, $lte: lessThan } });
+    const cards = Math.ceil(cards / limit);
     return { totalCards, result };
 };
 
@@ -126,9 +133,13 @@ function getSearchParam(search, field) {
     return { [field]: { $regex: searchRegExp } };
 }
 
+const getRelatedCardsQuery = ({cardId, sport, limit}) => Player.find({ _id: { $ne: cardId }, sport: { $regex: sport } }).sort({ rating: -1, createdAt: -1 }).limit(limit);
+
 module.exports = { 
     checkValues,
     getCardsByType,
     addPremiumValue,
-    additionalCardValues
+    additionalCardValues,
+    convertToNumber,
+    getRelatedCardsQuery
 }
